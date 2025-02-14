@@ -1,5 +1,7 @@
 import * as THREE from 'https://web.cs.manchester.ac.uk/three/three.js-master/build/three.module.js';
 
+import { Sphere1 } from '../objects/Sphere1.js';
+
 export class MainScene {
     constructor() {
         this.scene = new THREE.Scene();
@@ -9,14 +11,16 @@ export class MainScene {
             0.1,
             1000
         );
-        this.camera.position.set(0,1,5);
+        this.camera.position.set(0,0,5);
 
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(this.renderer.domElement);
 
         this.lights = []
-        this.objects = []
+        this.objects = [
+            new Sphere1()
+        ]
 
         this.objects.forEach(obj => this.scene.add(obj.mesh));
 
