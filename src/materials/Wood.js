@@ -17,7 +17,13 @@ export function createWood(){
             ambient: {value: {}},
             worldSpaceCameraPosition: {value: [0,0,0]},
             metallic: {value: 1.0},
-            smoothness: {value: 1.0}
+            smoothness: {value: 1.0},
+            emittedLight: {
+                value: {
+                    color: [0,0,0],
+                    intensity: 0
+                }
+            }
         }
     });
 }

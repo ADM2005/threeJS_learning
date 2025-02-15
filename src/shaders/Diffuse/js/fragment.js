@@ -20,6 +20,11 @@ uniform struct ambient_T{
     float intensity;
 } ambient;
 
+uniform struct emitted_T {
+    vec3 color;
+    float intensity;
+} emittedLight;
+
 vec3 computeDirectionalLight(vec3 N, vec3 L, vec3 color, float intensity){
     // Lambertian Diffuse
     float diffuse = max(dot(N, -L), 0.0);
@@ -54,6 +59,5 @@ void main(){
     finalColor += ambient.color * ambient.intensity;
     gl_FragColor = vec4(finalColor * albedo, 1.0);
 }
-
 
 `;

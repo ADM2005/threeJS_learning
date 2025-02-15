@@ -20,6 +20,11 @@ uniform struct ambient_T{
     float intensity;
 } ambient;
 
+uniform struct emitted_T {
+    vec3 color;
+    float intensity;
+} emittedLight;
+
 uniform float metallic;
 uniform float smoothness;
 
@@ -31,10 +36,11 @@ vec3 specularTint;
 vec3 albedoCol;
 vec3 computeDirectionalLight(vec3 N, vec3 L, vec3 color, float intensity, out vec3 specular){
     // Lambertian Diffuse
-    vec3 diffuse =  max(dot(N, -L), 0.0) * color;
+    vec3 diffuse =  albedoCol * max(dot(N, -L), 0.0) * color * intensity;
 
     vec3 halfVector = normalize(-L + viewDir);
-    specular = specularTint * color * pow(
+    float specularIntensity = smoothness;
+    specular = specularIntensity * specularTint * intensity * color * pow(
         max(dot(halfVector, N),0.0),
         smoothness * 300.
     );
@@ -85,5 +91,6 @@ void main(){
         }
     }
     finalColor += ambient.color * ambient.intensity * texture2D(albedo, vUv).rgb;
+    finalColor += emittedLight.color * emittedLight.intensity;
     gl_FragColor = vec4(finalColor, 1.0);
 }`

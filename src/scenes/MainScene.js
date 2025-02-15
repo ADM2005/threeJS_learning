@@ -1,6 +1,7 @@
 import * as THREE from 'https://web.cs.manchester.ac.uk/three/three.js-master/build/three.module.js';
 
 import { Sphere1 } from '../objects/Sphere1.js';
+import { Lamp } from '../objects/Lamp.js';
 
 export class MainScene {
     constructor() {
@@ -18,46 +19,38 @@ export class MainScene {
         document.body.appendChild(this.renderer.domElement);
 
         this.lights = [
-            // {
-            //     direction: new THREE.Vector3(-1,-1,-1).normalize(),
-            //     color: new THREE.Color(0xffffff),
-            //     intensity: 1.0,
-            //     position: new THREE.Vector3(0,0,0),
-            //     isPointlight: false
-            // },
-            {
-                direction: new THREE.Vector3(0,0,0),
-                color: new THREE.Color(0xff0000),
-                intensity: 1,
-                position: new THREE.Vector3(5.38516,0,0),
-                isPointlight: true
-            },
-            {
-                direction: new THREE.Vector3(0,0,0),
-                color: new THREE.Color(0x00ff00),
-                intensity: 1,
-                position: new THREE.Vector3(5,3,0),
-                isPointlight: true
-            },
-            {
-                direction: new THREE.Vector3(0,0,0),
-                color: new THREE.Color(0x0000ff),
-                intensity: 1,
-                position: new THREE.Vector3(5,-3,0),
-                isPointlight: true
-            }
+            //  {
+            //      direction: new THREE.Vector3(-1,-1,-1).normalize(),
+            //      color: new THREE.Color(0xffffff),
+            //      intensity: .5,
+            //      position: new THREE.Vector3(0,0,0),
+            //      isPointlight: false
+            //  }
+
         ]
+        this.l1 = new Lamp(new THREE.Vector3(5.38516,0,0), new THREE.Color(0xff0000), 2.0)
+        this.l2 = new Lamp(new THREE.Vector3(5,3,0), new THREE.Color(0x00ff00), 2.0)
+        this.l3 = new Lamp(new THREE.Vector3(5,-3,0), new THREE.Color(0x0000ff), 2.0)
+
+        this.theta = Math.PI/2
+        this.radius = 3.0
+        this.spacing = Math.PI/6
+
         this.objects = [
-            new Sphere1()
+            new Sphere1(),
+            this.l1,
+            this.l2,
+            this.l3
         ]
 
+        console.log(this.objects)
         this.ambient = {
                 color: new THREE.Color(0xffffff),
                 intensity: .01
         }
 
         this.objects.forEach(obj => this.scene.add(obj.mesh));
-
+        console.log(this.scene);
         window.addEventListener("resize", () => this.onWindowResize());
     
         // Select sliders and attach event listeners
@@ -67,9 +60,30 @@ export class MainScene {
         this.metallicSlider.addEventListener("input", () => this.updateMaterialProperties());
         this.smoothnessSlider.addEventListener("input", () => this.updateMaterialProperties());
     
+
+        this.radiusSlider = document.getElementById("radius");
+        this.radiusSlider.addEventListener("input", () => {this.radius = parseFloat(this.radiusSlider.value)})
+
+        this.intensitySlider = document.getElementById("intensity");
+        this.intensitySlider.addEventListener("input", () => {
+            let sliderValue = parseFloat(this.intensitySlider.value);
+            this.l1.lightSource.intensity = sliderValue;
+            this.l2.lightSource.intensity = sliderValue;
+            this.l3.lightSource.intensity = sliderValue;
+        })
+
+        this.spacingSlider = document.getElementById("spacing");
+        console.log(this.spacingSlider);
+        this.spacingSlider.addEventListener("input", () => {
+            this.spacing = parseFloat(this.spacingSlider.value);
+            console.log(this.spacing);
+        })
+
+
         this.updateMaterialProperties(); // Set initial values
 
         this.objects.forEach(obj => this.scene.add(obj.mesh));
+
 
         window.addEventListener('resize', () => this.onWindowResize());
         
@@ -97,8 +111,25 @@ export class MainScene {
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
+    updateLightPosition(delta){
+        this.theta += delta * 1000;
+        let l1x = this.radius * Math.sin(this.theta);
+        let l1y = this.radius * Math.cos(this.theta);
 
+        let l2x = this.radius * Math.sin(this.theta + this.spacing);
+        let l2y = this.radius * Math.cos(this.theta + this.spacing);
+
+        let l3x = this.radius * Math.sin(this.theta - this.spacing);
+        let l3y = this.radius * Math.cos(this.theta - this.spacing);
+        
+        this.l1.mesh.position.set(l1x,l1y,0);
+        this.l2.mesh.position.set(l2x,l2y,0);
+        this.l3.mesh.position.set(l3x,l3y,0);
+
+
+    }
     update(time) {
+        this.updateLightPosition(time);
         this.updateCameraPosition();
         this.updateLights();
         this.objects.forEach(obj => obj.update(time));
@@ -110,7 +141,7 @@ export class MainScene {
             if(obj.mesh.material.uniforms.worldSpaceCameraPosition){
                 obj.mesh.material.uniforms.worldSpaceCameraPosition.value = this.camera.position.toArray();
             }
-            console.log(obj.mesh.material.uniforms)
+            //console.log(obj.mesh.material.uniforms);
         })
     }
 
@@ -122,6 +153,18 @@ export class MainScene {
             position: light.position.toArray(),
             isPointLight: light.isPointlight
         }));
+
+        this.objects.map(obj => {
+            if(obj.lightSource){
+                lightData.push({
+                    direction: obj.lightSource.direction.toArray(),
+                    color: obj.lightSource.color.toArray(),
+                    intensity: obj.lightSource.intensity,
+                    position: obj.lightSource.position.toArray(),
+                    isPointLight: obj.lightSource.isPointlight
+                })
+            }
+        })
 
             // Pad the lightData array with null lights if there are fewer than 10
         const maxLights = 10; // Maximum number of lights allowed
@@ -137,7 +180,6 @@ export class MainScene {
             });
         }
 
-
         // Update the light data only if the material has the 'lights' uniform
         this.objects.forEach(obj => {
             if (obj.mesh.material.uniforms && obj.mesh.material.uniforms.lights) {
@@ -150,7 +192,7 @@ export class MainScene {
                     intensity: this.ambient.intensity
                 };
             }
-            //console.log(obj.mesh.material.uniforms);
+            console.log(obj.mesh.material.uniforms);
         });
 
     }
