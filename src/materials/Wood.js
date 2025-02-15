@@ -5,7 +5,7 @@ import fragmentShader from '../shaders/Diffuse/js/fragment.js';
 
 
 export function createWood(){
-    const texture = new THREE.TextureLoader().load("../../public/textures/wood.jpg");
+    const texture = new THREE.TextureLoader().load("../../public/textures/uv.bmp");
 
     return new THREE.ShaderMaterial({
         vertexShader,

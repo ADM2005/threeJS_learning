@@ -18,10 +18,19 @@ export class MainScene {
         document.body.appendChild(this.renderer.domElement);
 
         this.lights = [
+            // {
+            //     direction: new THREE.Vector3(-1,-1,-1).normalize(),
+            //     color: new THREE.Color(0xffffff),
+            //     intensity: 1.0,
+            //     position: new THREE.Vector3(0,0,0),
+            //     isPointlight: false
+            // },
             {
-                direction: new THREE.Vector3(-1,-1,-1).normalize(),
-                color: new THREE.Color(0xffffff),
-                intensity: 1.0
+                direction: new THREE.Vector3(0,0,0),
+                color: new THREE.Color(0xffff00),
+                intensity: 3.0,
+                position: new THREE.Vector3(3,0,0),
+                isPointlight: true
             }
         ]
         this.objects = [
@@ -54,7 +63,9 @@ export class MainScene {
         const lightData = this.lights.map(light => ({
             direction: light.direction.toArray(),
             color: light.color.toArray(),
-            intensity: light.intensity
+            intensity: light.intensity,
+            position: light.position.toArray(),
+            isPointLight: light.isPointlight
         }));
 
             // Pad the lightData array with null lights if there are fewer than 10
@@ -65,7 +76,9 @@ export class MainScene {
         paddedLightData.push({
                 direction: [0.0, 0.0, 0.0],
                 color: [0.0, 0.0, 0.0],
-                intensity: 0.0
+                intensity: 0.0,
+                position: [0.0,0.0,0.0],
+                isPointLight: false
             });
         }
 
