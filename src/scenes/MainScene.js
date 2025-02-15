@@ -27,9 +27,23 @@ export class MainScene {
             // },
             {
                 direction: new THREE.Vector3(0,0,0),
-                color: new THREE.Color(0xffff00),
-                intensity: 3.0,
-                position: new THREE.Vector3(3,0,0),
+                color: new THREE.Color(0xff0000),
+                intensity: 1,
+                position: new THREE.Vector3(5.38516,0,0),
+                isPointlight: true
+            },
+            {
+                direction: new THREE.Vector3(0,0,0),
+                color: new THREE.Color(0x00ff00),
+                intensity: 1,
+                position: new THREE.Vector3(5,3,0),
+                isPointlight: true
+            },
+            {
+                direction: new THREE.Vector3(0,0,0),
+                color: new THREE.Color(0x0000ff),
+                intensity: 1,
+                position: new THREE.Vector3(5,-3,0),
                 isPointlight: true
             }
         ]
@@ -39,12 +53,43 @@ export class MainScene {
 
         this.ambient = {
                 color: new THREE.Color(0xffffff),
-                intensity: .05
+                intensity: .01
         }
+
+        this.objects.forEach(obj => this.scene.add(obj.mesh));
+
+        window.addEventListener("resize", () => this.onWindowResize());
+    
+        // Select sliders and attach event listeners
+        this.metallicSlider = document.getElementById("metallic");
+        this.smoothnessSlider = document.getElementById("smoothness");
+    
+        this.metallicSlider.addEventListener("input", () => this.updateMaterialProperties());
+        this.smoothnessSlider.addEventListener("input", () => this.updateMaterialProperties());
+    
+        this.updateMaterialProperties(); // Set initial values
+
         this.objects.forEach(obj => this.scene.add(obj.mesh));
 
         window.addEventListener('resize', () => this.onWindowResize());
         
+    }
+
+    updateMaterialProperties(){
+        const metallicValue = parseFloat(this.metallicSlider.value);
+        const smoothnessValue = parseFloat(this.smoothnessSlider.value);
+    
+        document.getElementById("metallicValue").innerText = metallicValue.toFixed(2);
+        document.getElementById("smoothnessValue").innerText = smoothnessValue.toFixed(2);
+    
+        this.objects.forEach(obj => {
+            if (obj.mesh.material.uniforms.metallic) {
+                obj.mesh.material.uniforms.metallic.value = metallicValue;
+            }
+            if (obj.mesh.material.uniforms.smoothness) {
+                obj.mesh.material.uniforms.smoothness.value = smoothnessValue;
+            }
+        });
     }
 
     onWindowResize() {
@@ -54,9 +99,19 @@ export class MainScene {
     }
 
     update(time) {
+        this.updateCameraPosition();
         this.updateLights();
         this.objects.forEach(obj => obj.update(time));
         this.renderer.render(this.scene, this.camera);
+    }
+
+    updateCameraPosition(){
+        this.objects.forEach(obj => {
+            if(obj.mesh.material.uniforms.worldSpaceCameraPosition){
+                obj.mesh.material.uniforms.worldSpaceCameraPosition.value = this.camera.position.toArray();
+            }
+            console.log(obj.mesh.material.uniforms)
+        })
     }
 
     updateLights() {

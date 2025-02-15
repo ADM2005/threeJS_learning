@@ -19,7 +19,7 @@ export class Sphere1{
 
         this.theta += this.speed * delta;
         //this.mesh.position.x = this.radius *  2 * Math.sin(this.theta);
-        this.mesh.position.y = this.radius * Math.sin(2 * this.theta);
+        //this.mesh.position.y = this.radius * Math.sin(2 * this.theta);
 
         this.mesh.rotation.y += this.speed * delta;
         //this.mesh.rotation.y += 200 * 0.013 * delta;

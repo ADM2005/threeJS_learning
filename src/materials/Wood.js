@@ -1,7 +1,7 @@
 import * as THREE from 'https://web.cs.manchester.ac.uk/three/three.js-master/build/three.module.js';
 
-import vertexShader from '../shaders/Diffuse/js/vertex.js';
-import fragmentShader from '../shaders/Diffuse/js/fragment.js';
+import vertexShader from '../shaders/Metallic/js/vertex.js';
+import fragmentShader from '../shaders/Metallic/js/fragment.js';
 
 
 export function createWood(){
@@ -14,7 +14,10 @@ export function createWood(){
             albedo: {value: texture},
             lights: {value: []},
             numLights: {value: 0},
-            ambient: {value: {}}
+            ambient: {value: {}},
+            worldSpaceCameraPosition: {value: [0,0,0]},
+            metallic: {value: 1.0},
+            smoothness: {value: 1.0}
         }
     });
 }

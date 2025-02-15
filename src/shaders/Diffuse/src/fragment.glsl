@@ -26,7 +26,14 @@ vec3 computeDirectionalLight(vec3 N, vec3 L, vec3 color, float intensity){
 }
 
 vec3 computePointLight(vec3 N, vec3 pos, vec3 color, float intensity){
-    return vec3(0);
+    vec3 lightDir = pos - vPosition;
+    float distance = length(lightDir);
+    lightDir = normalize(lightDir);
+
+    float attenuation = 1.0 / (distance * distance);
+
+    float diffuse = max(dot(N, lightDir), 0.0);
+    return diffuse * color * intensity * attenuation;
 }
 void main(){
     //gl_FragColor = texture2D(albedo, vUv);
@@ -39,6 +46,7 @@ void main(){
             if(!lights[i].isPointLight){
                 finalColor += computeDirectionalLight(normal, lights[i].direction, lights[i].color, lights[i].intensity);
             }else{
+                finalColor += computePointLight(normal, lights[i].position, lights[i].color, lights[i].intensity);
             }
         }
     }

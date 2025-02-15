@@ -1,3 +1,4 @@
+export default `
 vec4 p;
 varying vec2 vUv;
 varying vec3 vNormal;
@@ -11,4 +12,4 @@ void main (){
     vUv = uv;
     vNormal = normalMatrix * normal;
     vPosition = (modelMatrix * vec4(position,1)).xyz;
-}
+}`;
