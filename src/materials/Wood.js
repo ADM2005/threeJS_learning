@@ -11,7 +11,10 @@ export function createWood(){
         vertexShader,
         fragmentShader,
         uniforms: {
-            albedo: {value: texture}
+            albedo: {value: texture},
+            lights: {value: []},
+            numLights: {value: 0},
+            ambient: {value: {}}
         }
     });
 }
