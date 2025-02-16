@@ -33,6 +33,9 @@ export class MainScene {
         this.radius = 3.0
         this.spacing = Math.PI/6
 
+        this.axis = new THREE.Vector3(0,1,0).normalize();
+        this.axisAngle = Math.PI/3;
+
         this.initialiseHTMLElements();  
         this.getHTMLData();
 
@@ -112,15 +115,40 @@ export class MainScene {
             console.log(this.endColor);
             this.createLamps();
         })
+
+        this.axisAngleSlider = document.getElementById("axisAngle");
+        this.axisAngleSlider.addEventListener("input", () => {
+            this.axisAngle = parseFloat(this.axisAngleSlider.value);
+        })
+
+        this.axisVectorXInput = document.getElementById("axisVectorX");
+        this.axisVectorYInput = document.getElementById("axisVectorY");
+        this.axisVectorZInput = document.getElementById("axisVectorZ");
+
+        this.axisVectorXInput.addEventListener("input", () => {
+            this.updateAxisVector()
+        })
+        this.axisVectorYInput.addEventListener("input", () => {
+            this.updateAxisVector()
+        })
+        this.axisVectorZInput.addEventListener("input", () => {
+            this.updateAxisVector()
+        })
+    }
+
+    updateAxisVector(){
+        this.axis = new THREE.Vector3(this.axisVectorXInput.value, this.axisVectorYInput.value, this.axisVectorZInput.value).normalize()
+        console.log(this.axis);
     }
 
     getHTMLData(){
         this.intensity = parseFloat(this.intensitySlider.value);
         this.lightCount = parseInt(this.lightCountElement.value);
         this.spacing = parseFloat(this.spacingSlider.value)/this.lightCount;
-
         this.startColor = new THREE.Color(this.startColorElement.value);
         this.endColor = new THREE.Color(this.endColorElement.value);
+        this.axisAngle = parseFloat(this.axisAngleSlider.value);
+        this.updateAxisVector();
     }
     createLamps(){
         let difference = this.objects.filter(x => !this.lamps.includes(x));
@@ -178,20 +206,12 @@ export class MainScene {
             let lamp = this.lamps[i];
             let x = this.radius * Math.sin(this.theta + i * this.spacing);
             let y = this.radius * Math.cos(this.theta + i * this.spacing);
-            lamp.mesh.position.set(x,y,0);
+
+            let pos = new THREE.Vector3(x,y,0);
+            pos.applyAxisAngle(this.axis, this.axisAngle);
+            lamp.mesh.position.set(pos.x,pos.y,pos.z);
+
         }
-        // let l1x = this.radius * Math.sin(this.theta);
-        // let l1y = this.radius * Math.cos(this.theta);
-
-        // let l2x = this.radius * Math.sin(this.theta + this.spacing);
-        // let l2y = this.radius * Math.cos(this.theta + this.spacing);
-
-        // let l3x = this.radius * Math.sin(this.theta - this.spacing);
-        // let l3y = this.radius * Math.cos(this.theta - this.spacing);
-        
-        // this.l1.mesh.position.set(l1x,l1y,0);
-        // this.l2.mesh.position.set(l2x,l2y,0);
-        // this.l3.mesh.position.set(l3x,l3y,0);
     }
     update(time) {
         this.updateLightPosition(time);
