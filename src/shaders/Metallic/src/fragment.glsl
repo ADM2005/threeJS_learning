@@ -10,7 +10,7 @@ uniform struct Light {
     float intensity;
     vec3 position;
     bool isPointLight;
-} lights[10]; // Maximum of 10 Directional Lights
+} lights[100]; // Maximum of 10 Directional Lights
 
 uniform int numLights;
 
@@ -18,6 +18,11 @@ uniform struct ambient_T{
     vec3 color;
     float intensity;
 } ambient;
+
+uniform struct emitted_T {
+    vec3 color;
+    float intensity;
+} emittedLight;
 
 uniform float metallic;
 uniform float smoothness;
@@ -30,12 +35,13 @@ vec3 specularTint;
 vec3 albedoCol;
 vec3 computeDirectionalLight(vec3 N, vec3 L, vec3 color, float intensity, out vec3 specular){
     // Lambertian Diffuse
-    vec3 diffuse = max(dot(N, -L), 0.0) * color;
+    vec3 diffuse =  albedoCol * max(dot(N, -L), 0.0) * color * intensity;
 
     vec3 halfVector = normalize(-L + viewDir);
-    specular = specularTint * color * pow(
+    float specularIntensity = smoothness;
+    specular = specularIntensity * specularTint * intensity * color * pow(
         max(dot(halfVector, N),0.0),
-        smoothness * 100.0
+        smoothness * 300.
     );
 
     return diffuse;
@@ -48,11 +54,13 @@ vec3 computePointLight(vec3 N, vec3 pos, vec3 color, float intensity, out vec3 s
 
     float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.01 * distance * distance);
 
-    vec3 diffuse = albedoCol * max(dot(N, lightDir), 0.0) * color * intensity * attenuation;
+    vec3 diffuse =  albedoCol * max(dot(N, lightDir), 0.0) * color * intensity * attenuation;
     vec3 halfVector = normalize(lightDir + viewDir);
-    specular = specularTint * color * intensity * attenuation * pow(
+
+    float specularIntensity = smoothness;
+    specular = specularIntensity * specularTint * color * intensity * attenuation * pow(
         max(dot(halfVector, N), 0.0),
-        smoothness * 100.0
+        max(smoothness * 300., 1.)
     );
     return diffuse;
 }
@@ -62,13 +70,13 @@ void main(){
     albedoCol = texture2D(albedo, vUv).rgb;
 
     viewDir = normalize(worldSpaceCameraPosition - vPosition);
-    specularTint = albedoCol * metallic;
+    specularTint = mix(vec3(0.2),albedoCol, metallic);
 
     oneMinusReflectivity = 1.0 - metallic;
     albedoCol *= oneMinusReflectivity;
 
     vec3 finalColor = vec3(0.0);
-    for (int i = 0; i < 10; i++){
+    for (int i = 0; i < 100; i++){
         if(i < numLights){
             vec3 sourceDiffuse;
             vec3 sourceSpecular;
@@ -82,4 +90,5 @@ void main(){
         }
     }
     finalColor += ambient.color * ambient.intensity * texture2D(albedo, vUv).rgb;
+    finalColor += emittedLight.color;
     gl_FragColor = vec4(finalColor, 1.0);

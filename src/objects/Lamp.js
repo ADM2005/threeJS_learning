@@ -19,18 +19,25 @@ export class Lamp{
             isPointlight: true
         }
 
-         this.material.uniforms.emittedLight.value = {
-             color: this.lightSource.color.toArray(),
-             intensity: this.lightSource.intensity
+
+        if(this.material.uniforms.emittedLight){
+            this.material.uniforms.emittedLight.value = {
+                color: this.lightSource.color.toArray(),
+                intensity: this.lightSource.intensity
+           }
         }
+
     }
 
 
     update(delta){
         this.lightSource.position = this.mesh.position;
+        if(this.material.uniforms.emittedLight){
+
          this.material.uniforms.emittedLight.value = {
              color: this.lightSource.color.toArray(),
              intensity: this.lightSource.intensity
          }
+        }
     }
 }

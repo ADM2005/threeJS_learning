@@ -19,6 +19,7 @@ uniform struct ambient_T{
     float intensity;
 } ambient;
 
+
 vec3 computeDirectionalLight(vec3 N, vec3 L, vec3 color, float intensity){
     // Lambertian Diffuse
     float diffuse = max(dot(N, -L), 0.0);

@@ -1,11 +1,12 @@
 import * as THREE from 'https://web.cs.manchester.ac.uk/three/three.js-master/build/three.module.js';
 import { createUVMap } from '../materials/uvMap.js';
+import { createDiffuseTest } from '../materials/diffuseTest.js';
 
 // Import OBJLoader from Three.js examples directory
 export class Sphere1{
     constructor() {
         this.geometry = new THREE.SphereGeometry(1,32,32);
-        this.material = createUVMap();
+        this.material = createDiffuseTest();
         this.mesh = new THREE.Mesh(this.geometry, this.material);
 
         this.elapsed = 0
