@@ -1,4 +1,4 @@
-import { MainScene } from "./scenes/MainScene.js";
+import { MainScene } from "../src/scenes/LightingScene.js";
 
 class App {
     constructor() {

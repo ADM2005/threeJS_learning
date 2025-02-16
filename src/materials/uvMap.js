@@ -4,7 +4,7 @@ import vertexShader from '../shaders/Metallic/js/vertex.js';
 import fragmentShader from '../shaders/Metallic/js/fragment.js';
 
 
-export function createWood(){
+export function createUVMap(){
     const texture = new THREE.TextureLoader().load("../../public/textures/uv.bmp");
 
     return new THREE.ShaderMaterial({
