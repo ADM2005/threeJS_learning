@@ -11,7 +11,7 @@ uniform struct Light {
     float intensity;
     vec3 position;
     bool isPointLight;
-} lights[10]; // Maximum of 10 Directional Lights
+} lights[100]; // Maximum of 10 Directional Lights
 
 uniform int numLights;
 
@@ -77,7 +77,7 @@ void main(){
     albedoCol *= oneMinusReflectivity;
 
     vec3 finalColor = vec3(0.0);
-    for (int i = 0; i < 10; i++){
+    for (int i = 0; i < 100; i++){
         if(i < numLights){
             vec3 sourceDiffuse;
             vec3 sourceSpecular;
@@ -91,6 +91,6 @@ void main(){
         }
     }
     finalColor += ambient.color * ambient.intensity * texture2D(albedo, vUv).rgb;
-    finalColor += emittedLight.color * emittedLight.intensity;
+    finalColor += emittedLight.color;
     gl_FragColor = vec4(finalColor, 1.0);
 }`

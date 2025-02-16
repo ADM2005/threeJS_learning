@@ -20,10 +20,6 @@ uniform struct ambient_T{
     float intensity;
 } ambient;
 
-uniform struct emitted_T {
-    vec3 color;
-    float intensity;
-} emittedLight;
 
 vec3 computeDirectionalLight(vec3 N, vec3 L, vec3 color, float intensity){
     // Lambertian Diffuse

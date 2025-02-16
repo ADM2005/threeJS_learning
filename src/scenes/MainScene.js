@@ -28,20 +28,22 @@ export class MainScene {
             //  }
 
         ]
-        this.l1 = new Lamp(new THREE.Vector3(5.38516,0,0), new THREE.Color(0xff0000), 2.0)
-        this.l2 = new Lamp(new THREE.Vector3(5,3,0), new THREE.Color(0x00ff00), 2.0)
-        this.l3 = new Lamp(new THREE.Vector3(5,-3,0), new THREE.Color(0x0000ff), 2.0)
-
         this.theta = Math.PI/2
+
         this.radius = 3.0
         this.spacing = Math.PI/6
 
+        this.initialiseHTMLElements();  
+        this.getHTMLData();
+
+        this.lamps = [];
+
         this.objects = [
             new Sphere1(),
-            this.l1,
-            this.l2,
-            this.l3
         ]
+
+        this.createLamps()
+
 
         console.log(this.objects)
         this.ambient = {
@@ -54,6 +56,17 @@ export class MainScene {
         window.addEventListener("resize", () => this.onWindowResize());
     
         // Select sliders and attach event listeners
+
+        this.updateMaterialProperties(); // Set initial values
+
+        this.objects.forEach(obj => this.scene.add(obj.mesh));
+
+
+        window.addEventListener('resize', () => this.onWindowResize());
+        
+    }
+
+    initialiseHTMLElements(){
         this.metallicSlider = document.getElementById("metallic");
         this.smoothnessSlider = document.getElementById("smoothness");
     
@@ -67,28 +80,76 @@ export class MainScene {
         this.intensitySlider = document.getElementById("intensity");
         this.intensitySlider.addEventListener("input", () => {
             let sliderValue = parseFloat(this.intensitySlider.value);
-            this.l1.lightSource.intensity = sliderValue;
-            this.l2.lightSource.intensity = sliderValue;
-            this.l3.lightSource.intensity = sliderValue;
+            this.updateLightIntensity(sliderValue);
         })
 
         this.spacingSlider = document.getElementById("spacing");
-        console.log(this.spacingSlider);
         this.spacingSlider.addEventListener("input", () => {
-            this.spacing = parseFloat(this.spacingSlider.value);
+            this.spacing = parseFloat(this.spacingSlider.value)/Math.max(this.lightCount,1);
             console.log(this.spacing);
         })
 
-
-        this.updateMaterialProperties(); // Set initial values
-
-        this.objects.forEach(obj => this.scene.add(obj.mesh));
-
-
-        window.addEventListener('resize', () => this.onWindowResize());
+        this.lightCountElement = document.getElementById("lightCount");
+        this.lightCountElement.addEventListener("input", () => {
+            let count = parseInt(this.lightCountElement.value);
+            this.lightCount = count;
+            this.spacing = parseFloat(this.spacingSlider.value)/count;
+            this.createLamps();
+        })
         
+        this.startColorElement = document.getElementById("startColor");
+        this.startColorElement.addEventListener("input", () => {
+            let color = new THREE.Color(this.startColorElement.value);
+            this.startColor = color;
+            console.log(this.startColor);
+            this.createLamps();
+        })
+
+        this.endColorElement = document.getElementById("endColor");
+        this.endColorElement.addEventListener("input", () => {
+            let color = new THREE.Color(this.endColorElement.value);
+            this.endColor = color;
+            console.log(this.endColor);
+            this.createLamps();
+        })
     }
 
+    getHTMLData(){
+        this.intensity = parseFloat(this.intensitySlider.value);
+        this.lightCount = parseInt(this.lightCountElement.value);
+        this.spacing = parseFloat(this.spacingSlider.value)/this.lightCount;
+
+        this.startColor = new THREE.Color(this.startColorElement.value);
+        this.endColor = new THREE.Color(this.endColorElement.value);
+    }
+    createLamps(){
+        let difference = this.objects.filter(x => !this.lamps.includes(x));
+        this.lamps.map( (lamp) => {
+            this.scene.remove(lamp.mesh);
+        } )
+        this.lamps = [];
+        this.objects = difference;
+        for(let i = 0; i < this.lightCount; i++){
+            let lamp = new Lamp(
+                new THREE.Vector3(this.radius * Math.sin(this.theta + i * this.spacing), this.radius * Math.cos(this.theta + i * this.spacing)),
+                //this.startColor.lerp(this.endColor, i/(this.lightCount-1)),
+                this.startColor.clone().lerp(this.endColor, i/(  Math.max(this.lightCount-1, 1)  )  ),
+                this.intensity
+            )
+
+            this.scene.add(lamp.mesh);
+            this.lamps.push(lamp);
+        }
+        this.lamps.map((lamp) => {
+            this.objects.push(lamp);
+        })
+    }
+    updateLightIntensity(intensity){
+        this.intensity = intensity;
+        this.lamps.map( (lamp) => {
+            lamp.lightSource.intensity = intensity;
+        } )
+    }
     updateMaterialProperties(){
         const metallicValue = parseFloat(this.metallicSlider.value);
         const smoothnessValue = parseFloat(this.smoothnessSlider.value);
@@ -113,20 +174,24 @@ export class MainScene {
     }
     updateLightPosition(delta){
         this.theta += delta * 1000;
-        let l1x = this.radius * Math.sin(this.theta);
-        let l1y = this.radius * Math.cos(this.theta);
+        for(let i = 0; i < this.lightCount; i++){
+            let lamp = this.lamps[i];
+            let x = this.radius * Math.sin(this.theta + i * this.spacing);
+            let y = this.radius * Math.cos(this.theta + i * this.spacing);
+            lamp.mesh.position.set(x,y,0);
+        }
+        // let l1x = this.radius * Math.sin(this.theta);
+        // let l1y = this.radius * Math.cos(this.theta);
 
-        let l2x = this.radius * Math.sin(this.theta + this.spacing);
-        let l2y = this.radius * Math.cos(this.theta + this.spacing);
+        // let l2x = this.radius * Math.sin(this.theta + this.spacing);
+        // let l2y = this.radius * Math.cos(this.theta + this.spacing);
 
-        let l3x = this.radius * Math.sin(this.theta - this.spacing);
-        let l3y = this.radius * Math.cos(this.theta - this.spacing);
+        // let l3x = this.radius * Math.sin(this.theta - this.spacing);
+        // let l3y = this.radius * Math.cos(this.theta - this.spacing);
         
-        this.l1.mesh.position.set(l1x,l1y,0);
-        this.l2.mesh.position.set(l2x,l2y,0);
-        this.l3.mesh.position.set(l3x,l3y,0);
-
-
+        // this.l1.mesh.position.set(l1x,l1y,0);
+        // this.l2.mesh.position.set(l2x,l2y,0);
+        // this.l3.mesh.position.set(l3x,l3y,0);
     }
     update(time) {
         this.updateLightPosition(time);
@@ -166,8 +231,10 @@ export class MainScene {
             }
         })
 
+
+
             // Pad the lightData array with null lights if there are fewer than 10
-        const maxLights = 10; // Maximum number of lights allowed
+        const maxLights = 100; // Maximum number of lights allowed
         const paddedLightData = [...lightData];
         while (paddedLightData.length < maxLights) {
         // Push null lights (no direction, color, or intensity) to fill up the remaining spots
@@ -192,7 +259,7 @@ export class MainScene {
                     intensity: this.ambient.intensity
                 };
             }
-            console.log(obj.mesh.material.uniforms);
+            //console.log(obj.mesh.material.uniforms);
         });
 
     }
