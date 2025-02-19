@@ -3,7 +3,7 @@ import * as THREE from 'https://web.cs.manchester.ac.uk/three/three.js-master/bu
 import { Sphere1 } from '../objects/Sphere1.js';
 import { Lamp } from '../objects/Lamp.js';
 
-export class MainScene {
+export class LightingScene {
     constructor() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(

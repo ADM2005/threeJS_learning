@@ -1,8 +1,8 @@
-import { MainScene } from "../src/scenes/LightingScene.js";
+import { LightingScene } from "../src/scenes/LightingScene.js";
 
 class App {
     constructor() {
-        this.scene = new MainScene();
+        this.scene = new LightingScene();
         this.prevTime = 0; // Previous time stamp
         this.start();
     }
