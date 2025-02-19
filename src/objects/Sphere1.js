@@ -6,7 +6,7 @@ import { createDiffuseTest } from '../materials/diffuseTest.js';
 export class Sphere1{
     constructor() {
         this.geometry = new THREE.SphereGeometry(1,32,32);
-        this.material = createDiffuseTest();
+        this.material = createUVMap();
         this.mesh = new THREE.Mesh(this.geometry, this.material);
 
         this.elapsed = 0
