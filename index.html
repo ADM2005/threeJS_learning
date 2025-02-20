@@ -3,20 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Type" content="text/plain; charset=utf-8">
-
-    <title>Three.JS Projects!</title>
+    <title>Simple Shading</title>
     <style>
         body { margin: 0; overflow: hidden; }
         canvas { display: block; }
     </style>
+</head>
 <body>
-    <!-- The canvas will be created and added by Three.js -->
-     <ul>
-        <li style="display: flex; flex-direction: column">
-            <a href="./projects/simple-shading/index.html">Simple Shading</a>
-            <a href="./projects/lighting/index.html">Lighting</a>
-        </li>
-     </ul>
+    
+    <div style="display: flex; flex-direction: column; position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; color: white;">
+        <label for="radius">Radius:</label>
+        <input type="range" id="radius" min="-5" max="5" step="0.01" value="3">  
+        
+        <label for="speed">Movement Speed:</label>
+        <input type="range" id="speed" min="-5" max="5" step="0.01" value="3">    
+
+        <label for="radius">Rotation Speed:</label>
+        <input type="range" id="rot" min="-5" max="5" step="0.01" value="3">    
+    </div>
+    <script type="module" src="projects/simple-shading/App.js"></script>
 </body>
 </html>
