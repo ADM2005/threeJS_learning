@@ -11,7 +11,7 @@ class App {
         const animate = (time) => {
             requestAnimationFrame(animate);
             const currentTime = time * 0.001;
-            const deltaTime = (currentTime - this.prevTime) *0.001;
+            const deltaTime = (currentTime - this.prevTime);
             this.prevTime = currentTime;
             this.scene.update(deltaTime);
         };

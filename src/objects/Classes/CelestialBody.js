@@ -1,148 +1,198 @@
 import * as THREE from 'https://web.cs.manchester.ac.uk/three/three.js-master/build/three.module.js';
-let G = 1
 
-let timeStep = 1/100000
+let G = 1;  // Gravitational constant, for simplicity (you can scale as needed)
+let timeStep = 1 / 100000;  // Time step for updates
 
 export class CelestialBody {
-    constructor(position, mass, vel_init) {
-        this.geometry = new THREE.SphereGeometry(.1, 32, 32);
-        this.material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    constructor(position, radius) {
+        this.geometry = new THREE.SphereGeometry(radius, 32, 32);
+        this.material = new THREE.MeshBasicMaterial({ 
+            color: 0xffffff
+         });
         this.mesh = new THREE.Mesh(this.geometry, this.material);
 
         this.position = position;
-        this.mesh.position.set(position.x, position.y, position.z);
-        this.previousPosition = this.position.clone().sub(vel_init.clone());
-        this.acceleration = new THREE.Vector3(0, 0, 0);
-        this.velocity = vel_init.clone();
-        this.mass = mass;
+        this.mesh.position.copy(this.position);
+
+        this.orbitPath = null;
+
+        this.orbitalBody = null;  // The body this object is orbiting
+        this.semiMajorAxis = 0;   // Semi-major axis
+        this.eccentricity = 0;    // Orbital eccentricity
+        this.orbitalPeriod = 0;   // Orbital period (in arbitrary units)
+        this.timeElapsed = 0;     // Time since the start of the orbit
+
+        this.xTilt = 0;
+        this.zTilt = 0;
+        this.yTilt = 0;
+
+        this.rotationPeriod = null;
+        this.rotationAxis = null;
     }
 
-    startSimulation() {
-        this.savedPosition = this.position.clone();
-        this.savedPreviousPosition = this.previousPosition.clone();
-        this.savedAcceleration = this.acceleration.clone();
-        this.savedVelocity = this.velocity.clone();
-        this.savedMass = this.mass;
+    setRotation(period, axis){
+        this.rotationPeriod = period;
+        this.rotationAxis = axis.clone().normalize();
     }
 
-    endSimulation() {
-        this.position = this.savedPosition.clone();
-        this.previousPosition = this.savedPreviousPosition.clone();
-        this.acceleration = this.savedAcceleration.clone();
-        this.velocity = this.savedVelocity.clone();
-        this.mass = this.savedMass;
+    updateRotation(deltaTime){
+        if(this.rotationPeriod && this.rotationPeriod > 0){
+            let angularSpeed = (2 * Math.PI) / this.rotationPeriod;
+            let deltaAngle = angularSpeed * deltaTime;
+
+            this.mesh.rotateOnAxis(this.rotationAxis, deltaAngle);
+        }
     }
 
-    step(deltaTime){
-        //this.verletStep(deltaTime)
-        //this.eulerStep(deltaTime);
-        this.eulerStep(deltaTime)
+    setTilt(x,y,z){
+        this.xTilt = x;
+        this.zTilt = z;
+        this.yTilt = y;
     }
 
-    eulerStep(deltaTime){
-        this.position.add(this.velocity.clone().multiplyScalar(deltaTime));
-        this.velocity.add(this.acceleration.clone().multiplyScalar(deltaTime));
+    // Set the orbital parameters
+    setOrbitBody(body, a, e, orbitalPeriod) {
+        this.orbitalBody = body;  // Set the central body
+        this.semiMajorAxis = a;
+        this.eccentricity = e;
+        this.orbitalPeriod = orbitalPeriod;
+        this.timeElapsed = 0;
     }
-    verletStep(deltaTime) {
-        let half_dt2 = 0.5 * deltaTime * deltaTime;
-        
-        // Update position
-        let newPosition = this.position.clone()
-            .add(this.velocity.clone().multiplyScalar(deltaTime))
-            .add(this.acceleration.clone().multiplyScalar(half_dt2));
+
+    // Solve Kepler's Equation using Newton's method to find the eccentric anomaly
+    solveKeplersEquation(M, e, tol = 1e-8) {
+        let E = M;  // Initial guess for Eccentric Anomaly (use M as the initial guess)
+        while (true) {
+            // Kepler's Equation: M = E - e * sin(E)
+            let f_E = E - e * Math.sin(E) - M;
+            let f_prime_E = 1 - e * Math.cos(E);
+            
+            // Newton's method update
+            let E_new = E - f_E / f_prime_E;
+            
+            // Convergence check
+            if (Math.abs(E_new - E) < tol) {
+                break;
+            }
+            E = E_new;
+        }
+        return E;
+    }
+
+    rotateAroundZ(axis, angle) {
+        let cosAngle = Math.cos(angle);
+        let sinAngle = Math.sin(angle);
+
+        return new THREE.Vector3(
+            axis.x * cosAngle - axis.y * sinAngle,
+            axis.x * sinAngle + axis.y * cosAngle,
+            axis.z
+        );
+    }
+
+    // Rotate a vector around the Y-axis
+    rotateAroundY(axis, angle) {
+        let cosAngle = Math.cos(angle);
+        let sinAngle = Math.sin(angle);
+
+        return new THREE.Vector3(
+            axis.x * cosAngle + axis.z * sinAngle,
+            axis.y,
+            -axis.x * sinAngle + axis.z * cosAngle
+        );
+    }
+
+    rotateAroundX(axis, angle) {
+        let cosAngle = Math.cos(angle);
+        let sinAngle = Math.sin(angle);
+
+        return new THREE.Vector3(
+            axis.x,
+            axis.y * cosAngle - axis.z * sinAngle,
+            axis.y * sinAngle + axis.z * cosAngle
+        );
+}
+
+    // Update the position of the celestial body based on the orbit
+    updatePosition(deltaTime) {
+        if (this.orbitalBody !== null) {
+            // Calculate mean anomaly M(t) based on time elapsed
+            let M = (2 * Math.PI / this.orbitalPeriod) * this.timeElapsed;
+
+            // Solve for the eccentric anomaly E(t)
+            let E = this.solveKeplersEquation(M, this.eccentricity);
+
+            // Calculate the true anomaly theta(t)
+            let theta = 2 * Math.atan(Math.sqrt((1 + this.eccentricity) / (1 - this.eccentricity)) * Math.tan(E / 2));
+
+            // Calculate the orbital radius at the current true anomaly
+            let r = this.semiMajorAxis * (1 - this.eccentricity * Math.cos(E));
+
+            // Position relative to the central body (orbitalBody)
+
+            let position = new THREE.Vector3(r * Math.cos(theta), r * Math.sin(theta), 0);
+
+            position = this.rotateAroundZ(position, this.zTilt);
+            position = this.rotateAroundY(position, this.yTilt);
+            position = this.rotateAroundX(position, this.xTilt);
+
+
+
+            this.position.copy(position.add(this.orbitalBody.position.clone()));
+
+            // this.position.x = this.orbitalBody.position.x + r * Math.cos(theta);
+            // this.position.y = this.orbitalBody.position.y + r * Math.sin(theta);
+            // this.position.z = this.orbitalBody.position.z;  // Assuming motion in the XY-plane (can adjust for 3D orbits)
+            
+
+
+            // Increment time
+            this.timeElapsed += deltaTime;
+        }
+    }
+
     
-        // Update velocity (store previous acceleration before updating)
-        let oldAcceleration = this.acceleration.clone();
-    
-        // Reset acceleration for next force calculation step
-        this.acceleration.set(0, 0, 0);
-    
-        // Apply new position
-        this.previousPosition = this.position.clone();
-        this.position.copy(newPosition);
-    
-        // Compute new acceleration AFTER forces are applied
-        this.velocity.add(oldAcceleration.clone().multiplyScalar(0.5 * deltaTime));
-    }
 
-    leapFrogStep(deltaTime){
-        this.velocity.add(this.acceleration.clone().multiplyScalar(0.5 * deltaTime));
-        this.position.add(this.velocity.clone().multiplyScalar(deltaTime));
-
-        //this.velocity.add(this.acceleration.clone().multiplyScalar(0.5 * deltaTime));
-        //this.mesh.position.set(this.position.x, this.position.y, this.position.z);
-    }
-    
-    update(deltaTime) {
-        this.step(timeStep);
+    update(deltaTime){
+        this.updatePosition(deltaTime);
+        this.updateRotation(deltaTime);
+        this.getOrbitPoints(1/1000, this.orbitalPeriod * 1001);
         this.mesh.position.set(this.position.x, this.position.y, this.position.z);
     }
 
-    applyForce(force) {
-        this.acceleration = force.clone().multiplyScalar(1 / this.mass);
+    saveData(){
+        this.s1 = this.semiMajorAxis; 
+        this.s2 = this.eccentricity;
+        this.s3 = this.orbitalPeriod;
+        this.s4 = this.timeElapsed;
+        this.s5 = this.position.clone();
     }
 
-    calculateResultantForce(bodies) {
-        let force = new THREE.Vector3(0,0,0);
-        for (let i = 0; i < bodies.length; i++) {
-            let obj = bodies[i];
-            if (obj !== this) {
-                force = force.add(calculateGravitationalForce(this, obj));
-            }
-        }
-        this.applyForce(force.clone());
+    reloadData(){
+        this.semiMajorAxis = this.s1;
+        this.eccentricity = this.s2;
+        this.orbitalPeriod = this.s3;
+        this.timeElapsed = this.s4;
+        this.position.copy(this.s5);
     }
 
-    calculateOrbitalPath(bodies, steps) {
-        for (let i = 0; i < bodies.length; i++) {
-            bodies[i].startSimulation();
-        }
+    getOrbitPoints(timeStep, count){
+        this.saveData();
+        let points = []
+        this.timeElapsed = 0;
 
-        let positions = [this.position.clone()];
-        for (let i = 0; i < steps; i++) {
-            bodies.map( (body) => {
-                body.calculateResultantForce(bodies);
-            } )
-            for (let j = 0; j < bodies.length; j++) {
-                bodies[j].step(timeStep);
-            }
-            positions.push(this.position.clone());
+        for(let i = 0; i < count; i++){
+            this.updatePosition(timeStep);
+            points.push(this.position.clone());
         }
+        this.reloadData();
 
-        for (let i = 0; i < bodies.length; i++) {
-            bodies[i].endSimulation();
-        }
+        let size = Math.sqrt(this.semiMajorAxis)* 1.5;
 
-        return positions;
+        const material = new THREE.LineDashedMaterial( { color: 0xffffff, linewidth: 10, dashSize: size, gapSize: size} );
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        let line = new THREE.Line(geometry, material);
+        line.computeLineDistances();
+        this.orbitPath = line;
     }
-    calculateOrbitalPathRelative(bodies, steps, relativeTo) {
-        for (let i = 0; i < bodies.length; i++) {
-            bodies[i].startSimulation();
-        }
-
-        let positions = [this.position.clone()];
-        for (let i = 0; i < steps; i++) {
-            bodies.map( (body) => {
-                body.calculateResultantForce(bodies);
-            } )
-            for (let j = 0; j < bodies.length; j++) {
-                bodies[j].step(timeStep);
-            }
-            positions.push(this.position.clone().sub(relativeTo.position))
-        }
-
-        for (let i = 0; i < bodies.length; i++) {
-            bodies[i].endSimulation();
-        }
-
-        return positions;
-    }
-}
-
-function calculateGravitationalForce(body1, body2) {
-    let b1b2 = body2.position.clone().sub(body1.position);
-    let r = b1b2.length();
-    b1b2.normalize();
-    let magnitude = G * body1.mass * body2.mass / (r * r);
-    return b1b2.clone().multiplyScalar(magnitude);
 }

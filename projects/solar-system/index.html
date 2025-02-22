@@ -10,7 +10,21 @@
     </style>
 </head>
 <body>
-    
+    <div style="display: flex; flex-direction: column; position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; color: white;">
+        <label for="simSpeed">Simulation Speed: </label>
+        <input type="number" value="1" min="0.00001" max="100" step="0.001" id="simSpeed">
+
+        <label for="relativeTo">Relative To: </label>
+        <select id="relativeTo" value="1">
+            <option value="1">Year Per Second</option>
+            <option value="12">Month Per Second</option>
+            <option value="52">Week Per Second</option>
+            <option value="365">Day Per Second</option>
+            <option value="8760">Hour Per Second</option>
+            <option value="525600">Minute Per Second</option>
+            <option value="31536000">Realtime (kind of dull)</option>
+        </select>
+    </div>
     <script type="module" src="App.js"></script>
 
 </body>
