@@ -38,11 +38,48 @@ export class Sun extends CelestialBody{
 
         this.elapsed = 0;
     }
+    
 
     update(deltaTime){
         this.elapsed += deltaTime;
         super.update(deltaTime);
         let scaleValue = 40 + 5 * Math.sin(30 * this.elapsed);
         this.aura.scale.set(scaleValue, scaleValue, 1);
+    }
+
+    addAtmosphere(camera) {
+        const atmosphereGeometry = new THREE.SphereGeometry(11, 256, 256); // Slightly larger
+        const atmosphereMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                fresnelColor: { value: new THREE.Color(0xffa500) }, // Orange glow
+                cameraPosition: { value: camera.position }
+            },
+            vertexShader: `
+                varying vec3 vNormal;
+                varying vec3 vViewPosition;
+                void main() {
+                    vNormal = normalize(normalMatrix * normal);
+                    vViewPosition = normalize(cameraPosition - position);
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 fresnelColor;
+                varying vec3 vNormal;
+                varying vec3 vViewPosition;
+    
+                void main() {
+                    float fresnel = pow(1.0 - dot(vNormal, vViewPosition), 3.0);
+                    gl_FragColor = vec4(fresnelColor, fresnel * 0.5);
+                }
+            `,
+            transparent: true,
+            side: THREE.BackSide, // Renders inside-out for the atmospheric effect
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+    
+        const atmosphereMesh = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+        this.mesh.add(atmosphereMesh);
     }
 }

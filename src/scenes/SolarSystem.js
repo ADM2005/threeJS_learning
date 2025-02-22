@@ -70,6 +70,7 @@ export class SolarSystem {
         this.earth.setTilt(Math.PI/2, 0, 0)
         this.earthClouds.setTilt(Math.PI/2, 0, 0)
 
+        this.earth.addAtmosphere(this.camera)
 
 
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -88,6 +89,31 @@ export class SolarSystem {
         this.cameraTarget = this.sun;
         this.cameraDistance = this.camera.position.distanceTo(this.cameraTarget.position);
         this.mousePos = new THREE.Vector2(0,0);
+
+
+        const starGeometry = new THREE.BufferGeometry();
+const starCount = 1000;
+const starVertices = [];
+
+for (let i = 0; i < starCount; i++) {
+    let x = (Math.random() - 0.5) * 2000;
+    let y = (Math.random() - 0.5) * 2000;
+    let z = (Math.random() - 0.5) * 2000;
+    starVertices.push(x, y, z);
+}
+
+starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+
+const starMaterial = new THREE.PointsMaterial({ 
+    color: 0xffffff, 
+    size: 1, 
+    transparent: true, 
+    opacity: 0.8 
+});
+
+const starField = new THREE.Points(starGeometry, starMaterial);
+this.scene.add(starField);
+
         window.addEventListener('resize', () => this.onWindowResize());
         window.addEventListener('click', (event) => this.onMouseClick(event));
     }
