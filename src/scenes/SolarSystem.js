@@ -19,6 +19,16 @@ export class SolarSystem {
             3000
         );
 
+        const loader = new THREE.CubeTextureLoader();
+        loader.setPath( '../../../public/textures/cube/' );
+
+        const textureCube = loader.load( [
+        	'px.png', 'nx.png',
+        	'py.png', 'ny.png',
+        	'pz.png', 'nz.png'
+        ] );
+
+        this.scene.background = textureCube
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Improves quality
@@ -34,8 +44,8 @@ export class SolarSystem {
         this.earth = new Earth(new THREE.Vector3(-385,0,0));
         this.earthClouds = new EarthClouds(new THREE.Vector3(-385,0,0));
         this.moon = new Moon(new THREE.Vector3(-387,0,0));
-        this.galaxy = new Galaxy();
-        this.scene.add(this.galaxy.mesh);
+        //this.galaxy = new Galaxy();
+        //this.scene.add(this.galaxy.mesh);
 
         const light = new THREE.PointLight( 0xffffff, 1, 300);
         light.castShadow = true;
@@ -92,27 +102,37 @@ export class SolarSystem {
 
 
         const starGeometry = new THREE.BufferGeometry();
-const starCount = 1000;
-const starVertices = [];
+        const starCount = 1000;
+        const starVertices = [];
 
-for (let i = 0; i < starCount; i++) {
-    let x = (Math.random() - 0.5) * 2000;
-    let y = (Math.random() - 0.5) * 2000;
-    let z = (Math.random() - 0.5) * 2000;
-    starVertices.push(x, y, z);
-}
+        let radius = 2000;
+        for (let i = 0; i < starCount; i++) {
+            let dist = Math.random() + 0.3;
+            let x = (Math.random() - 0.5);
+            let y = (Math.random() - 0.5);
+            let z = (Math.random() - 0.5);
 
-starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+            let magnitude = Math.sqrt(x*x + y*y + z*z);
 
-const starMaterial = new THREE.PointsMaterial({ 
-    color: 0xffffff, 
-    size: 1, 
-    transparent: true, 
-    opacity: 0.8 
-});
+            x *= dist * radius/magnitude
+            y *= dist * radius/magnitude
+            z *= dist * radius/magnitude
+            
 
-const starField = new THREE.Points(starGeometry, starMaterial);
-this.scene.add(starField);
+            starVertices.push(x, y, z);
+        }
+
+        starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+
+        const starMaterial = new THREE.PointsMaterial({ 
+            color: 0xffffff, 
+            size: 1, 
+            transparent: true, 
+            opacity: 0.8 
+        });
+
+        const starField = new THREE.Points(starGeometry, starMaterial);
+        this.scene.add(starField);
 
         window.addEventListener('resize', () => this.onWindowResize());
         window.addEventListener('click', (event) => this.onMouseClick(event));

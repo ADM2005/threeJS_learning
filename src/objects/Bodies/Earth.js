@@ -45,7 +45,7 @@ export class Earth extends CelestialBody{
                 }
             `,
             transparent: true,
-            side: THREE.DoubleSide, // Renders inside-out for the atmospheric effect
+            side: THREE.BackSide, // Renders inside-out for the atmospheric effect
             depthWrite: false,
             blending: THREE.AdditiveBlending
         });
